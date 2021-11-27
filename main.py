@@ -1,5 +1,9 @@
 import numpy as np
 from tensorflow.keras.preprocessing import image_dataset_from_directory
+from sklearn.preprocessing import StandardScaler
+from tensorflow import keras
+from tensorflow.keras import layers
+from sklearn.model_selection import train_test_split
 
 
 def load_training_dataset(dataset_location='./dataset/',
@@ -61,6 +65,26 @@ def load_training_dataset(dataset_location='./dataset/',
 
 
 if __name__ == "__main__":
-    X,Y = load_training_dataset();
+    (X, Y) = load_training_dataset()
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2)
+    num_classes = 3
+    input_shape = (100, 100, 3)
+    model = keras.Sequential(
+        [
+            keras.Input(shape=input_shape),
+            layers.Conv2D(32, kernel_size=(3, 3), activation="relu"),
+            layers.MaxPooling2D(pool_size=(2, 2)),
+            layers.Conv2D(64, kernel_size=(3, 3), activation="relu"),
+            layers.MaxPooling2D(pool_size=(2, 2)),
+            layers.Flatten(),
+            layers.Dropout(0.5),
+            layers.Dense(num_classes, activation="softmax"),
+        ]
+    )
+    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model.summary()
+    model.fit(X_train, y_train, batch_size=150, epochs=30)
 
-    print(X)
+    prediction_probas = model.evaluate(X_test, y_test)
+
+    print(prediction_probas)
