@@ -4,6 +4,8 @@ from sklearn.preprocessing import StandardScaler
 from tensorflow import keras
 from tensorflow.keras import layers
 from sklearn.model_selection import train_test_split
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 
 def load_training_dataset(dataset_location='./dataset/',
@@ -65,25 +67,59 @@ def load_training_dataset(dataset_location='./dataset/',
 
 
 if __name__ == "__main__":
-    (X, Y) = load_training_dataset()
-    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2)
+    datagen = ImageDataGenerator()
+    image_size = (100, 100)
+    (X, Y) = load_training_dataset(image_size=image_size)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.5)
+
+
+    X_train = np.array(X_train) / 255.0
+    X_test = np.array(X_test) / 255.0
+
+    X_train.reshape(-1, 100, 100, 1)
+    y_train = np.array(y_train)
+
+    X_test.reshape(-1, 100, 100, 1)
+    y_test = np.array(y_test)
+
+    datagen = ImageDataGenerator(
+        featurewise_center=False,  # set input mean to 0 over the dataset
+        samplewise_center=False,  # set each sample mean to 0
+        featurewise_std_normalization=False,  # divide inputs by std of the dataset
+        samplewise_std_normalization=False,  # divide each input by its std
+        zca_whitening=False,  # apply ZCA whitening
+        rotation_range=30,  # randomly rotate images in the range (degrees, 0 to 180)
+        zoom_range=0.2,  # Randomly zoom image
+        width_shift_range=0.1,  # randomly shift images horizontally (fraction of total width)
+        height_shift_range=0.1,  # randomly shift images vertically (fraction of total height)
+        horizontal_flip=True,  # randomly flip images
+        vertical_flip=False)  # randomly flip images
+
+    datagen.fit(X_train)
+
     num_classes = 3
     input_shape = (100, 100, 3)
     model = keras.Sequential(
         [
-            keras.Input(shape=input_shape),
-            layers.Conv2D(32, kernel_size=(3, 3), activation="relu"),
-            layers.MaxPooling2D(pool_size=(2, 2)),
-            layers.Conv2D(64, kernel_size=(3, 3), activation="relu"),
-            layers.MaxPooling2D(pool_size=(2, 2)),
+            layers.Conv2D(4, kernel_size=(3, 3), activation="relu",input_shape=input_shape),
+            layers.MaxPooling2D(),
+            layers.Conv2D(4, kernel_size=(3, 3), activation="relu"),
+            layers.MaxPooling2D(),
+            layers.Conv2D(8, kernel_size=(3, 3), activation="relu"),
+            layers.MaxPooling2D(),
+
             layers.Flatten(),
-            layers.Dropout(0.5),
+            layers.Dense(16, activation='relu'),
+
             layers.Dense(num_classes, activation="softmax"),
         ]
     )
-    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    opt = Adam(learning_rate=0.000001)
+
+    model.compile( loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     model.summary()
-    model.fit(X_train, y_train, batch_size=150, epochs=30)
+    model.fit(X_train, y_train, batch_size=20, epochs=50, validation_data=(X_test, y_test))
 
     prediction_probas = model.evaluate(X_test, y_test)
 
