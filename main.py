@@ -1,11 +1,11 @@
 import random
 import numpy as np
+from sympy import reduced_totient
 from tensorflow.keras.preprocessing import image_dataset_from_directory
 from tensorflow import keras
 from tensorflow.keras import layers
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.optimizers import Adam
-
 
 
 def load_training_dataset(dataset_location='./dataset/',
@@ -67,38 +67,36 @@ def load_training_dataset(dataset_location='./dataset/',
 if __name__ == "__main__":
     image_size = (100, 100)
     (X, Y) = load_training_dataset(image_size=image_size)
+    ds = load_training_dataset(image_size=image_size, return_format='tf')
 
-    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.5)
-
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.4)
 
     X_train = np.array(X_train) / 255.0
     X_test = np.array(X_test) / 255.0
-
-
-
 
     num_classes = 3
     input_shape = (100, 100, 3)
 
     model = keras.Sequential(
         [
-            layers.Conv2D(32, kernel_size=(3, 3), activation="relu",input_shape=input_shape),
+            layers.Conv2D(16, kernel_size=(3, 3), activation="relu", input_shape=input_shape),
             layers.MaxPooling2D(),
             layers.Conv2D(16, kernel_size=(3, 3), activation="relu"),
             layers.MaxPooling2D(),
+
             layers.Flatten(),
-            layers.Dense(36, activation='relu'),
-            layers.Dropout(0.4),
+            layers.Dropout(0.2),
+            layers.Dense(32, activation="relu"),
+
             layers.Dense(num_classes, activation="softmax"),
         ]
     )
-
 
     opt = Adam(learning_rate=0.000001)
 
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     model.summary()
-    model.fit(X_train, y_train, batch_size=20, epochs=100, validation_data=(X_test, y_test))
+    model.fit(X_train, y_train, batch_size=5, epochs=150, validation_data=(X_test, y_test))
 
     prediction_probas = model.evaluate(X_test, y_test)
 
