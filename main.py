@@ -6,6 +6,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.optimizers import Adam
+from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array
 
 
 def load_training_dataset(dataset_location='./dataset/',
@@ -79,14 +80,12 @@ if __name__ == "__main__":
 
     model = keras.Sequential(
         [
-            layers.Conv2D(16, kernel_size=(3, 3), activation="relu", input_shape=input_shape),
-            layers.MaxPooling2D(),
-            layers.Conv2D(16, kernel_size=(3, 3), activation="relu"),
-            layers.MaxPooling2D(),
+            layers.Conv2D(32 , kernel_size=(3, 3), activation="relu",  input_shape=input_shape),
+            layers.MaxPooling2D(pool_size=(2,2)),
+
 
             layers.Flatten(),
-            layers.Dropout(0.2),
-            layers.Dense(32, activation="relu"),
+            layers.Dropout(0.5),
 
             layers.Dense(num_classes, activation="softmax"),
         ]
@@ -94,9 +93,9 @@ if __name__ == "__main__":
 
     opt = Adam(learning_rate=0.000001)
 
-    model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
+    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
     model.summary()
-    model.fit(X_train, y_train, batch_size=5, epochs=150, validation_data=(X_test, y_test))
+    model.fit(X_train, y_train, batch_size=100, epochs=150, validation_data=(X_test, y_test))
 
     prediction_probas = model.evaluate(X_test, y_test)
 
