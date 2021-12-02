@@ -70,42 +70,29 @@ if __name__ == "__main__":
     (X, Y) = load_training_dataset(image_size=image_size)
     ds = load_training_dataset(image_size=image_size, return_format='tf')
 
-    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.4)
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.6)
 
     X_train = np.array(X_train) / 255.0
     X_test = np.array(X_test) / 255.0
 
     num_classes = 3
     input_shape = (100, 100, 3)
-    datagen = ImageDataGenerator(
-        featurewise_center=False,  # set input mean to 0 over the dataset
-        samplewise_center=False,  # set each sample mean to 0
-        featurewise_std_normalization=False,  # divide inputs by std of the dataset
-        samplewise_std_normalization=False,  # divide each input by its std
-        zca_whitening=False,  # apply ZCA whitening
-        rotation_range=30,  # randomly rotate images in the range (degrees, 0 to 180)
-        zoom_range=0.2,  # Randomly zoom image
-        width_shift_range=0.1,  # randomly shift images horizontally (fraction of total width)
-        height_shift_range=0.1,  # randomly shift images vertically (fraction of total height)
-        horizontal_flip=True,  # randomly flip images
-        vertical_flip=False)  # randomly flip images
 
-    print(X_train)
-    datagen.fit(X_train)
-    print(X_train)
     model = keras.Sequential(
         [
             layers.Conv2D(16, kernel_size=(3, 3), activation="relu", input_shape=input_shape),
             layers.MaxPooling2D(pool_size=(2, 2)),
-
-            layers.Conv2D(32, kernel_size=(3, 3), activation="relu", padding='valid'),
-            layers.Dropout(0.2),
-
             layers.MaxPooling2D(pool_size=(2, 2)),
-            layers.Conv2D(32, kernel_size=(3, 3), activation="relu", padding='valid'),
+
+            layers.Conv2D(8, kernel_size=(3, 3), activation="relu"),
+            layers.MaxPooling2D(pool_size=(2, 2)),
+
+            layers.Dropout(0.4),
+
 
             layers.Flatten(),
-            layers.Dropout(0.2),
+
+            layers.Dense(6, activation="relu"),
             layers.Dense(num_classes, activation="softmax"),
         ]
     )
