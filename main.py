@@ -1,9 +1,11 @@
 import random
 import numpy as np
-from sympy import reduced_totient
+from keras import Model
+from keras.applications.vgg16 import VGG16
 from tensorflow.keras.preprocessing import image_dataset_from_directory
 from tensorflow import keras
 from tensorflow.keras import layers
+from tensorflow.keras.models import Model
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.optimizers import Adam
 from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array
@@ -66,33 +68,32 @@ def load_training_dataset(dataset_location='./dataset/',
 
 
 if __name__ == "__main__":
-    image_size = (100, 100)
+    image_size = (224, 224)
     (X, Y) = load_training_dataset(image_size=image_size)
     ds = load_training_dataset(image_size=image_size, return_format='tf')
 
-    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.6)
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.4)
 
     X_train = np.array(X_train) / 255.0
     X_test = np.array(X_test) / 255.0
 
     num_classes = 3
-    input_shape = (100, 100, 3)
+    input_shape = (224, 224, 3)
+
+    base_model = VGG16(weights='imagenet', include_top=False,
+                       input_shape=input_shape)
+
+    base_model.trainable = False
+
 
     model = keras.Sequential(
         [
-            layers.Conv2D(16, kernel_size=(3, 3), activation="relu", input_shape=input_shape),
-            layers.MaxPooling2D(pool_size=(2, 2)),
-            layers.MaxPooling2D(pool_size=(2, 2)),
-
-            layers.Conv2D(8, kernel_size=(3, 3), activation="relu"),
-            layers.MaxPooling2D(pool_size=(2, 2)),
-
-            layers.Dropout(0.4),
-
-
+            base_model,
             layers.Flatten(),
-
-            layers.Dense(6, activation="relu"),
+            layers.Dropout(0.4),
+            layers.Dense(16, activation="relu"),
+            layers.Dropout(0.4),
+            layers.Dense(16, activation="relu"),
             layers.Dense(num_classes, activation="softmax"),
         ]
     )
@@ -100,7 +101,7 @@ if __name__ == "__main__":
     opt = Adam(learning_rate=0.0001)
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     model.summary()
-    model.fit(X_train, y_train, batch_size=100, epochs=500, validation_data=(X_test, y_test))
+    model.fit(X_train, y_train, batch_size=400, epochs=50, validation_data=(X_test, y_test))
 
     prediction_probas = model.evaluate(X_test, y_test)
 
