@@ -3,7 +3,7 @@ import numpy as np
 from keras import Model
 from keras.applications.vgg16 import VGG16
 from keras.applications.vgg19 import VGG19
-from keras.applications.xception import Xception
+from keras.applications.nasnet import NASNetLarge
 from tensorflow.keras.preprocessing import image_dataset_from_directory
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -70,7 +70,7 @@ def load_training_dataset(dataset_location='./dataset/',
 
 
 if __name__ == "__main__":
-    image_size = (224, 224)
+    image_size = (331, 331)
     (X, Y) = load_training_dataset(image_size=image_size)
     ds = load_training_dataset(image_size=image_size, return_format='tf')
 
@@ -80,9 +80,9 @@ if __name__ == "__main__":
     X_test = np.array(X_test) / 255.0
 
     num_classes = 3
-    input_shape = (224, 224, 3)
+    input_shape = (331, 331, 3)
 
-    base_model = Xception(weights='imagenet', include_top=False,
+    base_model = NASNetLarge(weights='imagenet', include_top=False,
                        input_shape=input_shape)
 
     base_model.trainable = False
@@ -92,19 +92,16 @@ if __name__ == "__main__":
         [
             base_model,
             layers.Flatten(),
-            layers.Dropout(0.4),
-            layers.Dense(16, activation="relu"),
-            layers.Dropout(0.4),
-            layers.Dense(8, activation="relu"),
+            layers.Dropout(0.2),
+
 
             layers.Dense(num_classes, activation="softmax"),
         ]
     )
 
-    opt = Adam(learning_rate=0.0001)
-    model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
+    model.compile(loss='categorical_crossentropy', optimizer="adam", metrics=['accuracy'])
     model.summary()
-    model.fit(X_train, y_train, batch_size=100, epochs=200, validation_data=(X_test, y_test))
+    model.fit(X_train, y_train, batch_size=10, epochs=15, validation_data=(X_test, y_test))
 
     prediction_probas = model.evaluate(X_test, y_test)
 
