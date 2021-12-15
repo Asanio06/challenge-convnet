@@ -3,7 +3,7 @@ import numpy as np
 from keras import Model
 from keras.applications.vgg16 import VGG16
 from keras.applications.vgg19 import VGG19
-from keras.applications.nasnet import NASNetLarge
+from keras.applications.xception import Xception
 from tensorflow.keras.preprocessing import image_dataset_from_directory
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     num_classes = 3
     input_shape = (331, 331, 3)
 
-    base_model = NASNetLarge(weights='imagenet', include_top=False,
+    base_model = Xception(weights='imagenet', include_top=False,
                        input_shape=input_shape)
 
     base_model.trainable = False
@@ -95,6 +95,13 @@ if __name__ == "__main__":
             layers.Dropout(0.2),
 
 
+            layers.Dense(8, activation="relu"),
+            layers.Dropout(0.2),
+
+            layers.Dense(8, activation="relu"),
+            layers.Dropout(0.2),
+
+            layers.Dense(8, activation="relu"),
             layers.Dense(num_classes, activation="softmax"),
         ]
     )
