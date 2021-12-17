@@ -1,9 +1,9 @@
 import random
 import numpy as np
 from keras import Model
-from keras.applications.inception_resnet_v2 import InceptionResNetV2
+from keras.applications.vgg16 import VGG16
+from keras.applications.vgg19 import VGG19
 from keras.applications.xception import Xception
-from keras.applications.nasnet import NASNetLarge
 from tensorflow.keras.preprocessing import image_dataset_from_directory
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -11,7 +11,9 @@ from tensorflow.keras.models import Model
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.optimizers import Adam
 from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array
-
+import os
+os.environ["TF_GPU_ALLOCATOR"]="cuda_malloc_async"
+os.environ["TF_CPP_VMODULE"]="gpu_process_state=10,gpu_cudamallocasync_allocator=10"
 
 def load_training_dataset(dataset_location='./dataset/',
                           return_format='numpy',
@@ -72,37 +74,17 @@ def load_training_dataset(dataset_location='./dataset/',
 if __name__ == "__main__":
     image_size = (331, 331)
     (X, Y) = load_training_dataset(image_size=image_size)
+    ds = load_training_dataset(image_size=image_size, return_format='tf')
 
-    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.3)
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.8)
 
+    # TODO : Transformer en fonction de preprocessing dans un fichier qui s'appellera preproccessing.py
     X_train = np.array(X_train) / 255.0
     X_test = np.array(X_test) / 255.0
 
-    num_classes = 3
-    input_shape = (331, 331, 3)
 
-    base_model = InceptionResNetV2(weights='imagenet', include_top=False,
-                                   input_shape=input_shape)
 
-    base_model.trainable = False
-
-    model = keras.Sequential(
-        [
-            base_model,
-            layers.Flatten(),
-            layers.Dropout(0.4),
-
-            layers.Dense(7, activation="relu"),
-
-            layers.Dense(num_classes, activation="softmax"),
-        ]
-    )
-
-    model.compile(loss='categorical_crossentropy', optimizer="adam", metrics=['accuracy'])
-    model.summary()
-    model.fit(X_train, y_train, batch_size=2, epochs=10, validation_data=(X_test, y_test))
-
-    model.save('trained_model/modeltest.h5')
+    model = keras.models.load_model("trained_model/model09965.h5")
 
     prediction_probas = model.evaluate(X_test, y_test)
 
